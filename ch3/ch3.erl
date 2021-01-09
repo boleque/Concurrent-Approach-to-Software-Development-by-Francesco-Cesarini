@@ -1,5 +1,5 @@
 -module(ch3).
--export([sum/1, sumRange/2, reverse_create/1, create/1, print/1, filter/2,reverse/1, concatenate/1]).
+-export([sum/1, sumRange/2, reverse_create/1, create/1, print/1, filter/2,reverse/1, concatenate/1, flatten/1]).
 
 % 3-1 Write sum function
 %---
@@ -55,7 +55,23 @@ concatenate([Head|Tail], Acc) ->
 	end.
 
 item([], Acc) -> Acc;
-item([El|Rest], Acc) ->
-	item(Rest, [El|Acc]).
+item([Head|Rest], Acc) ->
+	item(Rest, [Head|Acc]).
+	
 %---
+%input: [[[[]]], [1,[2,[3],[]]],[[[4]]],[five, six, [[seven]]]]
+%output: [1,2,3,4,5,6,seven]
+flatten(List) ->
+	flatten(List, []).
+
+flatten([], Acc) -> lists:reverse(Acc);
+flatten([Head|Tail], Acc) -> 
+	flatten(Tail, get_item(Head, Acc)).
+
+get_item([], Acc) -> Acc;
+get_item([Head|Tail], Acc) when is_list(Head) ->
+	get_item(Tail, get_item(Head, Acc));
+
+get_item([Head|Tail], Acc) ->
+	get_item(Tail, [Head|Acc]).
 
