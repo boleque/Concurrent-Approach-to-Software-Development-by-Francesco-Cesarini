@@ -1,5 +1,17 @@
 -module(ch3).
--export([sum/1, sumRange/2, reverse_create/1, create/1, print/1, filter/2,reverse/1, concatenate/1, flatten/1]).
+-export([
+	sum/1, 
+	sumRange/2, 
+	reverse_create/1, 
+	create/1, 
+	print/1, 
+	filter/2,
+	reverse/1, 
+	concatenate/1, 
+	flatten/1,
+	quick_sort/1,
+	merge_sort/1
+]).
 
 % 3-1 Write sum function
 %---
@@ -60,7 +72,7 @@ item([Head|Rest], Acc) ->
 	
 %---
 %input: [[[[]]], [1,[2,[3],[]]],[[[4]]],[five, six, [[seven]]]]
-%output: [1,2,3,4,5,6,seven]
+%output: [1,2,3,4,five,six,seven]
 flatten(List) ->
 	flatten(List, []).
 
@@ -74,4 +86,25 @@ get_item([Head|Tail], Acc) when is_list(Head) ->
 
 get_item([Head|Tail], Acc) ->
 	get_item(Tail, [Head|Acc]).
+
+% 3-6 Sorting
+%---
+quick_sort([]) -> [];
+quick_sort([Pivot|Tail]) ->
+	quick_sort([Val || Val <- Tail, Val =< Pivot]) ++ [Pivot] ++ quick_sort([Val || Val <- Tail, Val > Pivot]).
+%---
+merge_sort([Val]) -> [Val];
+merge_sort(List) -> 
+	{LHalf, RHalf} = lists:split(length(List) div 2, List),
+	merge(merge_sort(LHalf), merge_sort(RHalf)).
+
+merge(LHalf, RHalf) -> merge(LHalf, RHalf, []).
+merge([], [H|T], Acc) -> merge([], T, [H|Acc]);
+merge([H|T], [], Acc) -> merge(T, [], [H|Acc]);
+merge([Hl|Tl], [Hr|Tr], Acc) ->
+	if 
+		Hl =< Hr -> merge(Tl, [Hr|Tr], [Hl|Acc]);
+		true     -> merge([Hl|Tl], Tr, [Hr|Acc])
+	end;
+merge(_, _, Acc) -> lists:reverse(Acc).
 
