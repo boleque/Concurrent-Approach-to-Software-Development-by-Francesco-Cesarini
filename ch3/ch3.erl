@@ -12,6 +12,7 @@
 	quick_sort/1,
 	merge_sort/1,
 	eval/1,
+	make_indexing/1
 ]).
 
 % 3-1 Write sum function
@@ -110,6 +111,7 @@ merge([Hl|Tl], [Hr|Tr], Acc) ->
 merge(_, _, Acc) -> lists:reverse(Acc).
 
 % 3-8 Calculator
+% todo: ~(), if ... then ..
 
 eval(Exps) ->
 	compilator(parse(Exps)).
@@ -185,7 +187,68 @@ last_op([Op|T]) ->
 	last_op(Op, T).
 last_op(Op, [{br, '('}|T]) ->
 	{Op, T};
+last_op(Op, L) ->
+	{Op, L}.
 
-last_op(Op, [H|List]) ->
-	{Op, List}.
+% 3-9 Indexing
+make_indexing(FileName) -> 
+	FileData = read_file(FileName),
+	make_indexing(FileData, 1, maps:new()).
 
+make_indexing([], _, Acc) ->
+	Acc;
+	%maps:map(fun(_, V) -> zip(V, []) end, Acc);
+
+make_indexing([Words|T], Row, Acc) ->
+
+	Get_entries = fun(Word, Res) ->
+		Lines = maps:get(Word, Res, []),
+		maps:put(Word, Lines ++ [Row], Res)
+	end,
+
+	NewAcc = lists:foldl(
+		Get_entries,
+		Acc,
+		Words
+	),
+	make_indexing(T, Row + 1, NewAcc).
+
+read_file(FileName) ->
+	{ok, IODev} = file:open(FileName, read),
+	Data = read_file({io, IODev}, []),
+	file:close(IODev),
+	lists:reverse(Data).
+
+read_file({io, IODev}, Acc) ->
+	Line = io:get_line(IODev, ''),
+	case Line of
+		eof -> Acc;
+		_ ->
+			WordsList = string:split(string:strip(Line, right, $\n), " ", all),
+			read_file({io, IODev}, [WordsList|Acc])
+	end.
+
+zip(Src, Target) ->
+	%io:format("TEST: ~p~n", [Src]),
+	%Range = get_range(0, 0, Src),
+	case get_range(Src, 0, Target) of
+		{{Start, 0}, []} -> [Start|Target];
+		{{Start, End}, []} -> [{Start, End}|Target];
+		{{Start, 0}, Rest} -> zip(Rest, [Start|Target]);
+		{{Start, End}, Rest} -> zip(Rest, [{Start, End}|Target])
+	end.
+
+get_range([], _, Acc) -> 
+	{{Start, End}, []};
+
+get_range([H|T], Prev, Acc) when Start =:= 0 ->
+	get_range(H, End, T);
+
+get_range([H|T], Prev, Acc) when H =:= End ->
+	get_range(Start, End, T);
+
+get_range([H|T], Prev, Acc) when H =:= (End - 1) ->
+	get_range(Start, H, T);
+
+get_range([H|_]=L, Prev, Acc) when H =/= End -> 
+	{{Start, End}, L}.
