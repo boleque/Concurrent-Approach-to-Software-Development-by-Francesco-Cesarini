@@ -196,8 +196,7 @@ make_indexing(FileName) ->
 	make_indexing(FileData, 1, maps:new()).
 
 make_indexing([], _, Acc) ->
-	Acc;
-	%maps:map(fun(_, V) -> zip(V, []) end, Acc);
+	maps:map(fun(_, V) -> zip(V, []) end, Acc);
 
 make_indexing([Words|T], Row, Acc) ->
 
@@ -228,27 +227,17 @@ read_file({io, IODev}, Acc) ->
 			read_file({io, IODev}, [WordsList|Acc])
 	end.
 
-zip(Src, Target) ->
-	%io:format("TEST: ~p~n", [Src]),
-	%Range = get_range(0, 0, Src),
-	case get_range(Src, 0, Target) of
-		{{Start, 0}, []} -> [Start|Target];
-		{{Start, End}, []} -> [{Start, End}|Target];
-		{{Start, 0}, Rest} -> zip(Rest, [Start|Target]);
-		{{Start, End}, Rest} -> zip(Rest, [{Start, End}|Target])
+zip(Src, Res) ->
+	case get_range(Src, 0, 0) of
+		{{Start, 0}, []} -> [Start|Res];
+		{{Start, 0}, Rest} -> zip(Rest, [Start|Res]);
+		{{Start, End}, []} -> [{Start, End}|Res];
+		{{Start, End}, Rest} -> zip(Rest, [{Start, End}|Res])
 	end.
 
-get_range([], _, Acc) -> 
-	{{Start, End}, []};
-
-get_range([H|T], Prev, Acc) when Start =:= 0 ->
-	get_range(H, End, T);
-
-get_range([H|T], Prev, Acc) when H =:= End ->
-	get_range(Start, End, T);
-
-get_range([H|T], Prev, Acc) when H =:= (End - 1) ->
-	get_range(Start, H, T);
-
-get_range([H|_]=L, Prev, Acc) when H =/= End -> 
-	{{Start, End}, L}.
+get_range([], Start, End) -> {{Start, End}, []};
+get_range([H|T], 0, 0) -> get_range(T, H, 0);
+get_range([H|T], Start, 0) when Start =:= H-1 -> get_range(T, Start, H);
+get_range([H|T], H, 0) -> get_range(T, H, 0);
+get_range([H|T], Start, End) when End =:= H-1 -> get_range(T, Start, H);
+get_range(L, Start, End) -> {{Start, End}, L}.
