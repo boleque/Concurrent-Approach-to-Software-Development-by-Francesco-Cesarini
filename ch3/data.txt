@@ -2,4 +2,5 @@ Write a function that erlang will print this in readable form
 so that duplicates are removed erlang and adjacent numbers are put into
 range. You might like to think of this via function which turns
 list of the earlier list of erlang occurences into a list like
+[{1,2}, {4,6}, {98, 98}, {100, 100}, {102, 102}]
 through a sequene of transformations erlang

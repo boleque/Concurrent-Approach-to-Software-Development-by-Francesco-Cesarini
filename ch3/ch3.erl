@@ -12,7 +12,8 @@
 	quick_sort/1,
 	merge_sort/1,
 	eval/1,
-	make_indexing/1
+	make_indexing/1,
+	format/2
 ]).
 
 % 3-1 Write sum function
@@ -234,10 +235,32 @@ zip(Src, Res) ->
 		{{Start, End}, []} -> [{Start, End}|Res];
 		{{Start, End}, Rest} -> zip(Rest, [{Start, End}|Res])
 	end.
-
+ 
 get_range([], Start, End) -> {{Start, End}, []};
 get_range([H|T], 0, 0) -> get_range(T, H, 0);
 get_range([H|T], Start, 0) when Start =:= H-1 -> get_range(T, Start, H);
 get_range([H|T], H, 0) -> get_range(T, H, 0);
 get_range([H|T], Start, End) when End =:= H-1 -> get_range(T, Start, H);
 get_range(L, Start, End) -> {{Start, End}, L}.
+
+% 3-10
+format(FileName, Limit) ->
+	FileData = read_file(FileName),
+	format(FileData, Limit, []).
+
+format([[]], _, Acc) -> lists:reverse(Acc);
+format([Line|T]=L, Limit, Acc) when length(T) =:= 0 ->
+	{Formed, Rest} = form_line(Line, Limit, 0, []),
+	format([Rest|[]], Limit, [Formed|Acc]);
+
+format([Line|T], Limit, Acc) ->
+	{Formed, Rest} = form_line(Line, Limit, 0, []),
+	[NewLine|NT] = T,
+	format([Rest++NewLine|NT], Limit, [Formed|Acc]).
+
+form_line([], _, _, Res) -> {Res, []};
+form_line([Word|T], Limit, Counter, Res) when Counter + length(Word) =< Limit ->
+	form_line(T, Limit, Counter+length(Word), [Word|Res]);
+
+form_line([Word|_]=L, Limit, Counter, Res) when Counter + length(Word) > Limit ->
+	{Res, L}.
