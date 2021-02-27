@@ -19,6 +19,9 @@ handle_event({raise_alarm, Id, Alarm}, Count) ->
 handle_event({clear_alarm, Id, Alarm}, Count) ->
   print(clear, Id, Alarm, Count),
   Count+1;
+handle_event({billing_alarm, Id, Alarm}, Count) ->
+  print(billing, Id, Alarm, Count),
+  Count+1;
 handle_event(Event, Count) ->
   Count.
 
