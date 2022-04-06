@@ -18,9 +18,11 @@
 
 % 3-1 Write sum function
 %---
-sum(0) -> 0;
-sum(Num) when is_integer(Num) andalso Num > 0 ->
-	Num + sum(Num - 1).
+sum(Num) -> sum_acc(Num, 0).
+
+sum_acc(0, Acc) -> Acc;
+sum_acc(Num, Acc) -> sum_acc(Num-1, Acc+Num).
+
 %---
 sumRange(Stop, Stop) -> Stop;
 sumRange(Start, Stop) when Start =< Stop -> 
