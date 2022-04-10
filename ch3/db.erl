@@ -8,30 +8,41 @@
 
 new() -> [].
 
-write(Key, Item, Db) ->
-	[{Key, Item} | Db].
+write(Key, Element, Db) ->
+	[{Key, Element} | Db].
 
-read(Key, []) -> {key_error, Key};
-read(Key, [Item|Rest]) ->
+read(Key, []) -> {error, Key};
+read(Key, Db) ->
+	[Item | Rest] = Db,
 	case Item of
 		{Key, Value} -> {ok, Value};
 		_ -> read(Key, Rest)
 	end.
 
 delete(_, []) -> [];
-delete(Key, [Item|Rest]) -> 
+delete(Key, Db) ->
+	[Item | Rest] = Db,
 	case Item of
-		{Key, Value} -> delete(Key, Rest);
+		{Key, _Value} -> delete(Key, Rest);
 		_ -> [Item|delete(Key, Rest)]
 	end.
 
-destroy(Db) ->
+destroy(_Db) ->
 	{ok}.
 
 match(_, []) -> [];
-match(Element, [Item | Rest]) ->
-	case Item of 
-		{Key, Element} -> [Key|match(Element, Rest)];
-		_ -> match(Element, Rest)
+match(Element, Db) ->
+	match_acc(Element, Db, []).
+
+match_acc(_Element, [], Acc) ->
+	Acc;
+
+match_acc(Element, [Item | Rest], Acc) ->
+	case Item of
+		{Key, Element} -> match_acc(Element, Rest, [Key | Acc]);
+		_ -> match_acc(Element, Rest, Acc)
 	end.
+
+
+
 	
