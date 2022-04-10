@@ -102,20 +102,27 @@ quick_sort([Head|Tail]) ->
 	lists:merge3(quick_sort(Left_half), [Head], quick_sort(Right_half)).
 
 %---
-merge_sort([Val]) -> [Val];
+merge_sort(List) when length(List) < 2 -> List;
 merge_sort(List) -> 
-	{LHalf, RHalf} = lists:split(length(List) div 2, List),
-	merge(merge_sort(LHalf), merge_sort(RHalf)).
+	{Left_half, Right_half} = lists:split(length(List) div 2, List),
+	merge(
+		merge_sort(Left_half), 
+		merge_sort(Right_half)
+	).
 
-merge(LHalf, RHalf) -> merge(LHalf, RHalf, []).
-merge([], [H|T], Acc) -> merge([], T, [H|Acc]);
-merge([H|T], [], Acc) -> merge(T, [], [H|Acc]);
-merge([Hl|Tl], [Hr|Tr], Acc) ->
-	if 
-		Hl =< Hr -> merge(Tl, [Hr|Tr], [Hl|Acc]);
-		true     -> merge([Hl|Tl], Tr, [Hr|Acc])
-	end;
-merge(_, _, Acc) -> lists:reverse(Acc).
+merge(Left_half, Right_half) -> merge_acc(Left_half, Right_half, []).
+
+merge_acc([], [], Acc) -> lists:reverse(Acc);
+merge_acc([], [H_R|T_R], Acc) -> merge_acc([], T_R, [H_R|Acc]);
+merge_acc([H_L|T_L], [], Acc) -> merge_acc(T_L, [], [H_L|Acc]);
+
+merge_acc([H_L|T_L], [H_R|T_R], Acc) when H_L < H_R ->
+	merge_acc(T_L, [H_R|T_R], [H_L|Acc]);
+
+merge_acc([H_L|T_L], [H_R|T_R], Acc) ->
+	merge_acc([H_L|T_L], T_R, [H_R|Acc]).
+
+
 
 % 3-8 Calculator
 % todo: ~(), if ... then ..
