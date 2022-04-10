@@ -95,8 +95,12 @@ flatten([Head|Tail], Acc) ->
 % 3-6 Sorting
 %---
 quick_sort([]) -> [];
-quick_sort([Pivot|Tail]) ->
-	quick_sort([Val || Val <- Tail, Val =< Pivot]) ++ [Pivot] ++ quick_sort([Val || Val <- Tail, Val > Pivot]).
+quick_sort([Head|Tail]) ->
+	% Head is the pivot
+	Left_half = [Val || Val <- Tail, Val =< Head],
+	Right_half = [Val || Val <- Tail, Val > Head],
+	lists:merge3(quick_sort(Left_half), [Head], quick_sort(Right_half)).
+
 %---
 merge_sort([Val]) -> [Val];
 merge_sort(List) -> 
