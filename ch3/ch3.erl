@@ -82,15 +82,15 @@ flatten(List) ->
 	flatten(List, []).
 
 flatten([], Acc) -> lists:reverse(Acc);
-flatten([Head|Tail], Acc) -> 
-	flatten(Tail, get_item(Head, Acc)).
+flatten([Head|Tail], Acc) ->
+	case is_list(Head) of
+		true -> flatten(Head, Acc);
+		false -> flatten(Tail, [Head | Acc])
+	end.
 
-get_item([], Acc) -> Acc;
-get_item([Head|Tail], Acc) when is_list(Head) ->
-	get_item(Tail, get_item(Head, Acc));
+%%%%%%%%%%%
 
-get_item([Head|Tail], Acc) ->
-	get_item(Tail, [Head|Acc]).
+
 
 % 3-6 Sorting
 %---
