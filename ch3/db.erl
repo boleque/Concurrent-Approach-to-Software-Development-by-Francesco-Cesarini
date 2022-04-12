@@ -1,10 +1,6 @@
 -module(db).
--export([new/0]).
--export([write/3]).
--export([read/2]).
--export([delete/2]).
--export([destroy/1]).
--export([match/2]).
+-export([new/0, write/3, read/2, delete/2, destroy/1, match/2]).
+
 
 new() -> [].
 
