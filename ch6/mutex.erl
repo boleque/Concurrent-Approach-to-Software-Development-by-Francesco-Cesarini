@@ -17,15 +17,18 @@ signal() ->
     mutex ! {signal, self()}, ok.
 
 init() ->
+    process_flag(trap_exit, true),
     free().
 
 % 2 states: free->busy, busy->free
 free() ->
     receive
         {wait, Pid} ->
-            % todo link with Pid (try/catch in case Pid is exists)
-            Pid ! ok,
-            busy(Pid);
+            try link(Pid) of
+                _ -> Pid ! ok, busy(Pid)
+            catch
+                error:_Error -> free()
+            end;
         stop ->
             terminate()
     end.
@@ -33,7 +36,10 @@ free() ->
 busy(Pid) ->
     receive
         {signal, Pid} ->
-            % todo unlink with Pid (try/catch in case Pid is not exists)
+            catch unlink(Pid),
+            Pid ! ok,
+            free();
+        {'EXIT', Pid, _Reason} ->
             free()
     end.
 
