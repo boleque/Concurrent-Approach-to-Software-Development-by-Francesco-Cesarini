@@ -1,11 +1,3 @@
-%% Code from 
-%%   Erlang Programming
-%%   Francecso Cesarini and Simon Thompson
-%%   O'Reilly, 2008
-%%   http://oreilly.com/catalog/9780596518189/
-%%   http://www.erlangprogramming.org/
-%%   (c) Francesco Cesarini and Simon Thompson
-
 -module(my_supervisor).
 -export([start_link/2, stop/1]).
 -export([init/1]).
@@ -18,10 +10,10 @@ init(ChildSpecList) ->
   loop(start_children(ChildSpecList)).
 
 start_children([]) -> [];
-start_children([{M, F, A} | ChildSpecList]) ->
+start_children([{M, F, A, ProcType} | ChildSpecList]) ->
   case (catch apply(M,F,A)) of
     {ok, Pid} ->
-      [{Pid, {M,F,A}}|start_children(ChildSpecList)];
+      [{Pid, {M,F,A,ProcType}}|start_children(ChildSpecList)];
     _ ->
       start_children(ChildSpecList)
   end.
@@ -31,9 +23,9 @@ start_children([{M, F, A} | ChildSpecList]) ->
 %% child, replacing its entry in the list of children stored in the ChildList variable:
 
 restart_child(Pid, ChildList) ->
-  {value, {Pid, {M,F,A}}} = lists:keysearch(Pid, 1, ChildList),
+  {value, {Pid, {M,F,A,ProcType}}} = lists:keysearch(Pid, 1, ChildList),
   {ok, NewPid} = apply(M,F,A),
-  [{NewPid, {M,F,A}}|lists:keydelete(Pid,1,ChildList)].
+  [{NewPid, {M,F,A,ProcType}}|lists:keydelete(Pid,1,ChildList)].
 
 loop(ChildList) ->
   receive
