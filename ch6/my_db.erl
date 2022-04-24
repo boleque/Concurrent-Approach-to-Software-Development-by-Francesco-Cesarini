@@ -4,8 +4,9 @@
 
 %%%
 start() ->
-	register(my_db, spawn(?MODULE, init, [])),
-	ok.
+	Pid = spawn_link(?MODULE, init, []),
+	register(my_db, Pid),
+	{ok, Pid}.
 
 stop() ->
 	call(stop).
