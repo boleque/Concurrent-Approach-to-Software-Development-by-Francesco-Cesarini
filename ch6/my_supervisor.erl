@@ -22,15 +22,25 @@ start_children([{M, F, A, ProcType} | ChildSpecList]) ->
 %% If a child terminates, the supervisor receives the EXIT signal and restarts the terminated 
 %% child, replacing its entry in the list of children stored in the ChildList variable:
 
-restart_child(Pid, ChildList) ->
+restart_child(Pid, ChildList, Reason) ->
   {value, {Pid, {M,F,A,ProcType}}} = lists:keysearch(Pid, 1, ChildList),
-  {ok, NewPid} = apply(M,F,A),
-  [{NewPid, {M,F,A,ProcType}}|lists:keydelete(Pid,1,ChildList)].
+  ShouldRestart = case {ProcType, Reason} of
+                    {permanent, _} -> true;
+                    {transient, normal} -> false;
+                    {transient, _Other} -> true
+                  end,
+  OldPidRemovedChildList = lists:keydelete(Pid,1,ChildList),
+  if
+    ShouldRestart ->
+      {ok, NewPid} = apply(M,F,A),
+      [{NewPid, {M,F,A,ProcType}} | OldPidRemovedChildList];
+    true -> OldPidRemovedChildList
+  end.
 
 loop(ChildList) ->
   receive
-    {'EXIT', Pid, _Reason} ->
-      NewChildList = restart_child(Pid, ChildList),
+    {'EXIT', Pid, Reason} ->
+      NewChildList = restart_child(Pid, ChildList, Reason),
       loop(NewChildList);
     {stop, From}  ->
       From ! {reply, terminate(ChildList)}
