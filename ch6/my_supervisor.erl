@@ -10,10 +10,10 @@ init(ChildSpecList) ->
   loop(start_children(ChildSpecList)).
 
 start_children([]) -> [];
-start_children([{M, F, A, ProcType} | ChildSpecList]) ->
+start_children([{M, F, A, ProcType, FirstFallTime, FallsNum} | ChildSpecList]) ->
   case (catch apply(M,F,A)) of
     {ok, Pid} ->
-      [{Pid, {M,F,A,ProcType}}|start_children(ChildSpecList)];
+      [{Pid, {M,F,A,ProcType,FirstFallTime,FallsNum}}|start_children(ChildSpecList)];
     _ ->
       start_children(ChildSpecList)
   end.
@@ -23,7 +23,7 @@ start_children([{M, F, A, ProcType} | ChildSpecList]) ->
 %% child, replacing its entry in the list of children stored in the ChildList variable:
 
 restart_child(Pid, ChildList, Reason) ->
-  {value, {Pid, {M,F,A,ProcType}}} = lists:keysearch(Pid, 1, ChildList),
+  {value, {Pid, {M,F,A,ProcType,FirstFallTime,FallsNum}}} = lists:keysearch(Pid, 1, ChildList),
   ShouldRestart = case {ProcType, Reason} of
                     {permanent, _} -> true;
                     {transient, normal} -> false;
@@ -33,7 +33,7 @@ restart_child(Pid, ChildList, Reason) ->
   if
     ShouldRestart ->
       {ok, NewPid} = apply(M,F,A),
-      [{NewPid, {M,F,A,ProcType}} | OldPidRemovedChildList];
+      [{NewPid, {M,F,A,ProcType,FirstFallTime,FallsNum}} | OldPidRemovedChildList];
     true -> OldPidRemovedChildList
   end.
 
