@@ -24,18 +24,47 @@ start_children([{M, F, A, ProcType, FirstFallTime, FallsNum} | ChildSpecList]) -
 
 restart_child(Pid, ChildList, Reason) ->
   {value, {Pid, {M,F,A,ProcType,FirstFallTime,FallsNum}}} = lists:keysearch(Pid, 1, ChildList),
-  ShouldRestart = case {ProcType, Reason} of
+  IsTypeRestartable = case {ProcType, Reason} of
                     {permanent, _} -> true;
                     {transient, normal} -> false;
                     {transient, _Other} -> true
                   end,
+  TimeNow = calendar:time_to_seconds(time()), % sec
+  IsEnoughAttempts = case {FirstFallTime, FallsNum} of
+                    {0, _} -> 
+                      io:format("First fall, module ~p~n", [M]),
+                      NewFirstFallTime = TimeNow, 
+                      NewFallsNum = FallsNum - 1,
+                      true;
+                    {_, 0} ->
+                      io:format("Last fall, module ~p~n", [M]),
+                      NewFallsNum = FallsNum,
+                      NewFirstFallTime = FirstFallTime,
+                      false;
+                    _ ->
+                      TimeDiff = TimeNow - FirstFallTime,
+                      io:format("Fall number: ~p, module ~p, timediff ~p~n", [FallsNum, M, TimeDiff]),
+                      if
+                        TimeDiff < 60 ->
+                          NewFirstFallTime = FirstFallTime,
+                          NewFallsNum = FallsNum - 1,
+                          true;
+                        true ->
+                          NewFirstFallTime = TimeNow,
+                          NewFallsNum = 5,
+                          true
+                      end
+                  end,
   OldPidRemovedChildList = lists:keydelete(Pid,1,ChildList),
   if
-    ShouldRestart ->
+    IsTypeRestartable and IsEnoughAttempts ->
       {ok, NewPid} = apply(M,F,A),
-      [{NewPid, {M,F,A,ProcType,FirstFallTime,FallsNum}} | OldPidRemovedChildList];
+      [{NewPid, {M,F,A,ProcType,NewFirstFallTime,NewFallsNum}} | OldPidRemovedChildList];
     true -> OldPidRemovedChildList
   end.
+
+loop([]) ->
+  io:format("There aren`t processes to restart~n", []);
 
 loop(ChildList) ->
   receive
