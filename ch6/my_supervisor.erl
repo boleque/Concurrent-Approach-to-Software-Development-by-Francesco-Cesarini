@@ -1,5 +1,5 @@
 -module(my_supervisor).
--export([start_link/2, stop/1]).
+-export([start_link/2, stop/1, start_child/3, stop_child/1]).
 -export([init/1]).
 
 start_link(Name, ChildSpecList) ->
@@ -9,11 +9,28 @@ init(ChildSpecList) ->
   process_flag(trap_exit, true),
   loop(start_children(ChildSpecList)).
 
+get_process_id() ->
+  calendar:time_to_seconds(time()).
+
+start_child(M, F, A) ->
+  case (catch apply(M,F,A)) of
+    {ok, Pid} ->
+      Id = get_process_id(),
+      self() ! {new_child, M, F, A, Pid, Id},
+      {ok, Id};
+    _ -> 
+      error
+  end.
+
+stop_child(Id) ->
+  self() ! {stop_child, Id}.
+  
 start_children([]) -> [];
 start_children([{M, F, A, ProcType, FirstFallTime, FallsNum} | ChildSpecList]) ->
   case (catch apply(M,F,A)) of
     {ok, Pid} ->
-      [{Pid, {M,F,A,ProcType,FirstFallTime,FallsNum}}|start_children(ChildSpecList)];
+      Id = get_process_id(),
+      [{Pid, Id, {M,F,A,ProcType,FirstFallTime,FallsNum}}|start_children(ChildSpecList)];
     _ ->
       start_children(ChildSpecList)
   end.
@@ -23,7 +40,7 @@ start_children([{M, F, A, ProcType, FirstFallTime, FallsNum} | ChildSpecList]) -
 %% child, replacing its entry in the list of children stored in the ChildList variable:
 
 restart_child(Pid, ChildList, Reason) ->
-  {value, {Pid, {M,F,A,ProcType,FirstFallTime,FallsNum}}} = lists:keysearch(Pid, 1, ChildList),
+  {value, {Pid, Id, {M,F,A,ProcType,FirstFallTime,FallsNum}}} = lists:keysearch(Pid, 1, ChildList),
   IsTypeRestartable = case {ProcType, Reason} of
                     {permanent, _} -> true;
                     {transient, normal} -> false;
@@ -55,11 +72,11 @@ restart_child(Pid, ChildList, Reason) ->
                           true
                       end
                   end,
-  OldPidRemovedChildList = lists:keydelete(Pid,1,ChildList),
+  OldPidRemovedChildList = lists:keydelete(Pid, 1, ChildList),
   if
     IsTypeRestartable and IsEnoughAttempts ->
       {ok, NewPid} = apply(M,F,A),
-      [{NewPid, {M,F,A,ProcType,NewFirstFallTime,NewFallsNum}} | OldPidRemovedChildList];
+      [{NewPid, Id, {M,F,A,ProcType,NewFirstFallTime,NewFallsNum}} | OldPidRemovedChildList];
     true -> OldPidRemovedChildList
   end.
 
@@ -70,6 +87,14 @@ loop(ChildList) ->
   receive
     {'EXIT', Pid, Reason} ->
       NewChildList = restart_child(Pid, ChildList, Reason),
+      loop(NewChildList);
+    {new_child, M, F, A, Pid, Id} -> 
+      NewChildList = [{Pid, Id, {M,F,A,persistent,0,5}} | ChildList],
+      loop(NewChildList);
+    {stop_child, Id} ->
+      {value, {Pid, _Id, _ProcessAttributes}} = lists:keysearch(Id, 2, ChildList),
+      exit(Pid, normal),
+      NewChildList = lists:keydelete(Pid, 1, ChildList),
       loop(NewChildList);
     {stop, From}  ->
       From ! {reply, terminate(ChildList)}
