@@ -13,17 +13,14 @@ get_process_id() ->
   calendar:time_to_seconds(time()).
 
 start_child(M, F, A) ->
-  case (catch apply(M,F,A)) of
-    {ok, Pid} ->
-      Id = get_process_id(),
-      self() ! {new_child, M, F, A, Pid, Id},
-      {ok, Id};
-    _ -> 
-      error
+  my_supervisor ! {new_child, self(), M, F, A},
+  receive
+    {ok, ChildPid} -> ChildPid;
+    error -> error
   end.
 
 stop_child(Id) ->
-  self() ! {stop_child, Id}.
+  my_supervisor ! {stop_child, Id}.
   
 start_children([]) -> [];
 start_children([{M, F, A, ProcType, FirstFallTime, FallsNum} | ChildSpecList]) ->
@@ -44,7 +41,8 @@ restart_child(Pid, ChildList, Reason) ->
   IsTypeRestartable = case {ProcType, Reason} of
                     {permanent, _} -> true;
                     {transient, normal} -> false;
-                    {transient, _Other} -> true
+                    {transient, _Other} -> true;
+                    _ -> false
                   end,
   TimeNow = calendar:time_to_seconds(time()), % sec
   IsEnoughAttempts = case {FirstFallTime, FallsNum} of
@@ -86,16 +84,31 @@ loop([]) ->
 loop(ChildList) ->
   receive
     {'EXIT', Pid, Reason} ->
+      io:format("Process with: ~p is terminated~n", [Pid]),
       NewChildList = restart_child(Pid, ChildList, Reason),
       loop(NewChildList);
-    {new_child, M, F, A, Pid, Id} -> 
-      NewChildList = [{Pid, Id, {M,F,A,persistent,0,5}} | ChildList],
-      loop(NewChildList);
+    {new_child, Pid, M, F, A} ->
+      case (catch apply(M, F, A)) of
+        {ok, PidNewChild} ->
+          IdNewChild = get_process_id(),
+          NewChildList = [{PidNewChild, IdNewChild, {M,F,A,permanent,0,5}} | ChildList],
+          Pid ! {ok, IdNewChild},
+          loop(NewChildList);
+        _ ->
+          Pid ! error,
+          loop(ChildList)
+      end;
     {stop_child, Id} ->
-      {value, {Pid, _Id, _ProcessAttributes}} = lists:keysearch(Id, 2, ChildList),
-      exit(Pid, normal),
-      NewChildList = lists:keydelete(Pid, 1, ChildList),
-      loop(NewChildList);
+      io:format("Stop child process: ~p~n", [Id]),
+      case lists:keysearch(Id, 2, ChildList) of
+        {value, {Pid, _Id, _ProcessAttributes}} ->
+          unlink(Pid),
+          exit(Pid, kill),
+          NewChildList = lists:keydelete(Pid, 1, ChildList),
+          loop(NewChildList);
+        false ->
+          loop(ChildList)
+      end;
     {stop, From}  ->
       From ! {reply, terminate(ChildList)}
   end.
