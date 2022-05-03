@@ -2,6 +2,9 @@
 -export([start/0, stop/0, write/2, delete/1, read/1, match/1]).
 -export([init/0, loop/1]).
 
+-record(data, {key, data}).
+
+
 %%%
 start() ->
 	register(db_server, spawn(my_db, init, [])),
@@ -11,7 +14,7 @@ stop() ->
 	call(stop).
 
 write(Key, Element) ->
-	Data = {Key, Element},
+	Data = #data{key=Key, data=Element},
 	call({write, Data}).
 
 delete(Key) ->
@@ -61,7 +64,7 @@ write_impl(Data, Db) ->
 read_impl(_, []) -> {error, instance};
 read_impl(Key, [Item|Rest]) ->
 	case Item of
-		{Key, Element} -> {ok, Element};
+		#data{key=Key, data=Element} -> {ok, Element};
 		_ -> read_impl(Key, Rest)
 	end.
 
@@ -73,7 +76,7 @@ delete_acc(_Key, [], Acc) ->
 	Acc;
 delete_acc(Key, [Item | Rest], Acc) ->
 	case Item of
-		{Key, _} -> delete_acc(Key, Rest, Acc);
+		#data{key=Key, data=_Element} -> delete_acc(Key, Rest, Acc);
 		_ -> delete_acc(Key, Rest, [Item | Acc])
 	end.
 
@@ -91,6 +94,6 @@ match_acc(_Element, [], Acc) ->
 
 match_acc(Element, [Item | Rest], Acc) ->
 	case Item of
-		{Key, Element} -> match_acc(Element, Rest, [Key | Acc]);
+		#data{key=Key, data=Element} -> match_acc(Element, Rest, [Key | Acc]);
 		_ -> match_acc(Element, Rest, Acc)
 	end.
