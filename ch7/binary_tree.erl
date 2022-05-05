@@ -27,23 +27,17 @@ max_node_acc(null, Max) ->
 is_valid(Root) ->
     is_valid_helper(Root, -1000000, 1000000).
 
-is_valid_helper(#tree_node{value=Value} = _Node, Min_value, Max_value) when Value =< Min_value; Value >= Max_value ->
-    false;
-
-is_valid_helper(#tree_node{
-        value=Value,
-        left_child=Left,
-        right_child=Right
-    } = _Node,
-    Min_value,
-    Max_value
-) ->
-    A = is_valid_helper(Left, Min_value, Value),
-    if A == false -> false end,
-    B = is_valid_helper(Right, Value, Max_value),
-    if B == false -> false end,
+is_valid_helper(null, _Min_value, _Max_value) ->
     true;
 
-is_valid_helper(null, _Min_value, _Max_value) ->
-    true.
-
+is_valid_helper(#tree_node{value=Value, left_child=Left, right_child=Right}=_Node, Min_value, Max_value) ->
+    if
+        Value < Min_value ->
+            false;
+        Value > Max_value ->
+            false;
+        true ->
+            A = is_valid_helper(Right, Value, Max_value),
+            B = is_valid_helper(Left, Min_value, Value),
+            A and B
+    end.
