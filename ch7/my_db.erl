@@ -2,6 +2,12 @@
 -export([start/0, stop/0, write/2, delete/1, read/1, match/1]).
 -export([init/0, loop/1]).
 
+-ifdef(debug).
+	-define(DBG(Str, Arg), io:format(Str, Arg)).
+-else.
+	-define(DBG(Str, Arg), ok).
+-endif.
+
 -record(data, {key, data}).
 
 
@@ -30,7 +36,7 @@ match(Element) ->
 call(Message) ->
 	db_server ! {self(), Message},
 	receive
-		{reply, Reply} -> Reply
+		{reply, Reply} -> ?DBG("~p:call(~p) called~n", [?MODULE, Reply])
 	end.
 
 init() ->
