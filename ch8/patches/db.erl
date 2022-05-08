@@ -7,11 +7,9 @@
 new() -> gb_trees:empty().
 
 write(Key, Data, Db) -> 
-  io:format("db1.0:write~n", []),
   gb_trees:insert(Key, Data, Db).
 
 read(Key, Db) ->
-  io:format("db1.0:read~n", []),
   case gb_trees:lookup(Key, Db) of
     none         -> {error, instance};
     {value, Data} -> {ok, Data}
@@ -20,14 +18,11 @@ read(Key, Db) ->
 destroy(_Db) -> ok.
 
 delete(Key, Db) ->
-  io:format("db1.0:delete~n", []),
   gb_trees:delete(Key, Db).
 
 code_upgrade([]) ->
-  io:format("db1.0:code_upgrade empty~n", []),
   new();
 code_upgrade(Db) ->
-  io:format("db1.0:code_upgrade Db:~p~n", [Db]),
   etsfy(Db, new()).
 
 etsfy([{Key, Data}|Rest], GbTree) ->

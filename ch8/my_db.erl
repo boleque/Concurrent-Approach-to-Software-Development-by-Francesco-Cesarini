@@ -32,7 +32,6 @@ init() ->
 loop(Db) ->
   receive
 	{code_upgrade, _Pid} ->
-		io:format("mydb:code_upgrade~n", []),
 		loop(db:code_upgrade(Db));
     {write, Key, Data} ->
        loop(db:write(Key, Data, Db));
