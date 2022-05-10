@@ -3,6 +3,7 @@
 - export([get_smaller/2]).
 - export([print_even/2]).
 - export([concat/1]).
+- export([sum/1]).
 
 
 %%%
@@ -32,4 +33,11 @@ concat(ListOfLists) ->
         fun(Item, Accumulator) -> Accumulator ++ Item end,
         [],
         ListOfLists
+    ).
+
+sum(List) ->
+    lists:foldl(
+    fun(Val, Accumulator) -> Val + Accumulator end,
+    0,
+    List
     ).
