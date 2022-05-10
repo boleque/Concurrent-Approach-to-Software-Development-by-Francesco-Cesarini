@@ -37,7 +37,7 @@ concat(ListOfLists) ->
 
 sum(List) ->
     lists:foldl(
-    fun(Val, Accumulator) -> Val + Accumulator end,
-    0,
-    List
+        fun(Val, Accumulator) -> Val + Accumulator end,
+        0,
+        List
     ).
