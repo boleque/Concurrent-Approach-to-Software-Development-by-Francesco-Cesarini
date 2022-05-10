@@ -2,6 +2,7 @@
 - export([print_range/2]).
 - export([get_smaller/2]).
 - export([print_even/2]).
+- export([concat/1]).
 
 
 %%%
@@ -25,3 +26,10 @@ print_even(From, To) ->
         ListOfEvens
     ).
 
+%%%
+concat(ListOfLists) ->
+	lists:foldl(
+        fun(Item, Accumulator) -> Accumulator ++ Item end,
+        [],
+        ListOfLists
+    ).
