@@ -1,7 +1,8 @@
 -module(tasks_9_4).
 -export([map/2]).
 -export([foldl/3]).
--export([foldr/3]).
+-export([foldr_1/3]).
+-export([foldr_2/3]).
 
 
 %%
@@ -23,8 +24,12 @@ foldl(Fun, Acc, [Hd|Tail]) ->
     foldl(Fun, Fun(Hd, Acc), Tail).
 
 %% not tail recursive, traverse from right to left
-foldr(_Fun, Acc, []) ->
+foldr_1(_Fun, Acc, []) ->
     Acc;
 
-foldr(Fun, Acc, [Hd|Tail]) ->
-    Fun(Hd, foldr(Fun, Acc, Tail)).
+foldr_1(Fun, Acc, [Hd|Tail]) ->
+    Fun(Hd, foldr_1(Fun, Acc, Tail)).
+
+%% https://erlang.org/pipermail/erlang-questions/2012-May/066633.html
+foldr_2(Fun, Acc, Seq) ->
+    foldl(Fun, Acc, lists:reverse(Seq)).
