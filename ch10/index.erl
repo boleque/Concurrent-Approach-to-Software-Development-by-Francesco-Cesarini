@@ -1,7 +1,8 @@
 -module(index).
 
 -export([index/1,processFile/1,prettyEntry/1]).
--export([accumulate/1, accumulate/2]). 
+-export([accumulate/1, accumulate/2]).
+-export([prettyList/1]).
 
 
 index(File) ->
@@ -76,6 +77,7 @@ prettyEntry(IndexEntry) ->
   % exercise
   ok.
 
+%%
 accumulate(Seq) ->
   accumulate(Seq, []).
 
@@ -104,6 +106,25 @@ accumulate([NextEl|NRest], [{EndEl,StartEl}|PRest]=Acc) ->
     true ->
       accumulate(NRest, [{NextEl}|Acc])
   end.
+
+%%
+prettyList([]) ->
+  ok;
+
+prettyList([{StartEl}]) ->
+  io:format("~p.~n",[StartEl]);
+
+prettyList([{StartEl, EndEl}]) ->
+  io:format("~p-~p.~n",[StartEl,EndEl]);
+
+prettyList([{StartEl, EndEl}|Rest]) ->
+  io:format("~p-~p,",[StartEl,EndEl]),
+  prettyList(Rest);
+
+prettyList([{StartEl}|Rest]) ->
+  io:format("~p,",[StartEl]),
+  prettyList(Rest).
+
 
 
 
