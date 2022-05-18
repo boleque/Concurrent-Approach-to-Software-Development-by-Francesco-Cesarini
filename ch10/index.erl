@@ -39,7 +39,6 @@ processWords(Words,N) ->
   case Words of
     [] -> ok;
     [Word|Rest] ->
-      %io:format("Here Iam LEN:~p~n", [length(binary_to_list(Word))]),
       WordConverted = binary_to_list(Word),
       if
         length(WordConverted) > 3 ->
