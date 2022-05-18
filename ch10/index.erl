@@ -1,6 +1,8 @@
 -module(index).
 
--export([index/1,processFile/1,prettyEntry/1]). 
+-export([index/1,processFile/1,prettyEntry/1]).
+-export([accumulate/1, accumulate/2]). 
+
 
 index(File) ->
   ets:new(indexTable, [ordered_set, named_table]),
@@ -71,11 +73,37 @@ prettyIndexNext(Entry,{Word, Lines}=IndexEntry) ->
   end.
 
 prettyEntry(IndexEntry) ->
-    % exercise
-    ok.
+  % exercise
+  ok.
 
+accumulate(Seq) ->
+  accumulate(Seq, []).
 
-    
+accumulate([], Acc) ->
+  Acc;
+
+accumulate([N|NRest], []) ->
+  accumulate(NRest, [{N}]);
+
+accumulate([NextEl|NRest], [{StartEl}|PRest]=Acc) ->
+  if
+    StartEl == NextEl ->
+      accumulate(NRest, [{StartEl}|PRest]);
+    StartEl == NextEl + 1 ->
+      accumulate(NRest, [{NextEl,StartEl}|PRest]);
+    true ->
+      accumulate(NRest, [{NextEl}|Acc])
+  end;
+
+accumulate([NextEl|NRest], [{EndEl,StartEl}|PRest]=Acc) ->
+  if
+    EndEl == NextEl ->
+      accumulate(NRest, [{EndEl,StartEl}|PRest]);
+    EndEl == NextEl + 1 ->
+      accumulate(NRest, [{NextEl,StartEl}|PRest]);
+    true ->
+      accumulate(NRest, [{NextEl}|Acc])
+  end.
 
 
 
